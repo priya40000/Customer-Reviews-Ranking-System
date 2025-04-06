@@ -1,0 +1,201 @@
+--- To create a database
+
+create database Reviews_ranking_system;
+
+--- To activate the database
+
+use Reviews_ranking_system;
+
+--- To create Tables
+
+CREATE TABLE Customers (
+    Cust_id INT PRIMARY KEY AUTO_INCREMENT,
+    Cust_name VARCHAR(255) NOT NULL,
+    Email VARCHAR(255) UNIQUE NOT NULL,
+    Phone VARCHAR(20) UNIQUE,
+    Created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Products (
+    Product_id INT PRIMARY KEY AUTO_INCREMENT,
+    Product_name VARCHAR(255) NOT NULL,
+    Category VARCHAR(100),
+    Price DECIMAL(10,2) NOT NULL,
+    Stock INT NOT NULL DEFAULT 0,
+    Created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Reviews (
+    Review_id INT PRIMARY KEY AUTO_INCREMENT,
+    Product_id INT,
+    Cust_id INT,
+    Rating INT CHECK (Rating BETWEEN 1 AND 5),
+    Review_text TEXT,
+    Created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Product_id) REFERENCES Products(Product_id) ON DELETE CASCADE,
+    FOREIGN KEY (Cust_id) REFERENCES Customers(Cust_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Feedback (
+    Feedback_id INT PRIMARY KEY AUTO_INCREMENT,
+    Review_id INT,
+    Cust_id INT,
+    Feedback_text TEXT NOT NULL,
+    Created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Review_id) REFERENCES Reviews(Review_id) ON DELETE CASCADE,
+    FOREIGN KEY (Cust_id) REFERENCES Customers(Cust_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Ratings (
+    Rating_id INT PRIMARY KEY AUTO_INCREMENT,
+    Product_id INT,
+    Cust_id INT,
+    Rating INT CHECK (Rating BETWEEN 1 AND 5),
+    Created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Product_id) REFERENCES Products(Product_id) ON DELETE CASCADE,
+    FOREIGN KEY (Cust_id) REFERENCES Customers(Cust_id) ON DELETE CASCADE
+);
+
+--- Insert the values
+
+INSERT INTO Customers (Cust_name, Email, Phone) VALUES
+('Alice Johnson', 'alice@example.com', '1234567890'),
+('Bob Smith', 'bob@example.com', '0987654321'),
+('Charlie Brown', 'charlie@example.com', '1122334455'),
+('David Lee', 'david@example.com', '5566778899'),
+('Emma Watson', 'emma@example.com', '6677889900');
+select * from Customers;
+
+INSERT INTO Products (Product_name, Category, Price, Stock) VALUES
+('Wireless Headphones', 'Electronics', 79.99, 50),
+('Smartphone', 'Electronics', 699.99, 30),
+('Running Shoes', 'Footwear', 59.99, 100),
+('Backpack', 'Accessories', 34.99, 80),
+('Gaming Mouse', 'Electronics', 49.99, 40);
+select * from Products;
+
+INSERT INTO Reviews (Product_id, Cust_id, Rating, Review_text) VALUES
+(1, 1, 5, 'Great sound quality and battery life!'),
+(2, 2, 4, 'Good phone, but a bit expensive.'),
+(3, 3, 3, 'Comfortable but not very durable.'),
+(4, 4, 5, 'Perfect size for daily use.'),
+(5, 5, 4, 'Responsive and ergonomic design.');
+select * from Reviews;
+
+INSERT INTO Feedback (Review_id, Cust_id, Feedback_text) VALUES
+(1, 2, 'Thanks for the review! I was considering buying these.'),
+(2, 3, 'Agree! I found it a bit overpriced too.'),
+(3, 4, 'How long did they last for you?'),
+(4, 5, 'This helped me decide! Thanks for sharing.'),
+(5, 1, 'Does the mouse work well for gaming?');
+select * from Feedback;
+
+INSERT INTO Ratings (Product_id, Cust_id, Rating) VALUES
+(1, 3, 5),
+(2, 4, 4),
+(3, 5, 3),
+(4, 1, 5),
+(5, 2, 4);
+select * from Ratings;
+
+--- Create a stored procedure to display all customers.
+
+DELIMITER //
+CREATE PROCEDURE GetAllCustomers()
+BEGIN
+    SELECT * FROM Customers;
+END //
+DELIMITER ;
+call GetAllCustomers();
+
+--- Create a stored procedure to list all products that are in stock.
+
+DELIMITER //
+CREATE PROCEDURE GetProductsInStock()
+BEGIN
+    SELECT * FROM Products WHERE Stock > 0;
+END //
+DELIMITER ;
+call GetProductsInStock();
+
+---  Create a stored procedure to view all product reviews.
+
+DELIMITER //
+CREATE PROCEDURE ShowAllReviews()
+BEGIN
+    SELECT * FROM Reviews;
+END //
+DELIMITER ;
+call ShowAllReviews();
+
+---  Create a stored procedure to display all feedback entries.
+DELIMITER //
+CREATE PROCEDURE GetAllFeedback()
+BEGIN
+    SELECT * FROM Feedback;
+END //
+DELIMITER ;
+call GetAllFeedback();
+
+--- Create a stored procedure to show average ratings for each product.
+
+DELIMITER //
+CREATE PROCEDURE GetAverageRatings()
+BEGIN
+    SELECT Product_id, AVG(Rating) AS AvgRating FROM Ratings GROUP BY Product_id;
+END //
+DELIMITER ;
+call GetAverageRatings();
+
+--- Create a stored procedure to get customer details by their ID.
+
+DELIMITER //
+CREATE PROCEDURE Get_CustomerBy_Id(IN c_id INT)
+BEGIN
+    SELECT * FROM Customers WHERE Cust_id = c_id;
+END //
+DELIMITER ;
+call Get_CustomerBy_Id(1);
+
+--- Create a stored procedure to get products based on their category.
+
+DELIMITER //
+CREATE PROCEDURE GetProductsByCategory(IN cat VARCHAR(100))
+BEGIN
+    SELECT * FROM Products WHERE Category = cat;
+END //
+DELIMITER ;
+call GetProductsByCategory('Electronics');
+
+---  Create a stored procedure to insert a new review.
+
+DELIMITER //
+CREATE PROCEDURE AddReview(IN p_id INT, IN cust_id INT, IN rate INT, IN review_text TEXT)
+BEGIN
+    INSERT INTO Reviews ( Product_id, Cust_id, Rating, Review_text )
+    VALUES (p_id, cust_id, rate, review_text);
+END //
+DELIMITER ;
+CALL AddReview(1, 1, 4, 'Bad phone, but a bit expensive.');
+select * from Reviews;
+
+--- Create a stored procedure to get all reviews for a particular product.
+
+DELIMITER //
+CREATE PROCEDURE GetReviewsByProduct(IN prod_id INT)
+BEGIN
+    SELECT * FROM Reviews WHERE Product_id = prod_id;
+END //
+DELIMITER ;
+call GetReviewsByProduct(1);
+
+--- Create a stored procedure to check if a specific product is in stock.
+
+DELIMITER //
+CREATE PROCEDURE CheckProductStock(IN prod_id INT)
+BEGIN
+    SELECT Product_name, Stock FROM Products WHERE Product_id = prod_id;
+END //
+DELIMITER ;
+
+call CheckProductStock(1);
